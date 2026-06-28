@@ -1,0 +1,37 @@
+# 编辑器配置
+.vscode/
+
+# Keil 编译产物文件夹
+DebugConfig/
+Listings/
+Objects/
+
+# Keil 用户本地配置（每台电脑不一样，无需上传）
+*.uvoptx
+*.uvguix.*
+*.uvguix.Admin
+
+# 编译生成文件
+*.hex
+*.bin
+*.axf
+*.map
+*.lst
+*.obj
+*.o
+*.d
+*.crf
+*.dep
+*.lnp
+*.iex
+*.scvd
+*.plg
+*.rra
+*.tmp
+
+# 系统垃圾
+Thumbs.db
+.DS_Store
+
+# 可选：批处理文件不需要可以加 keilkill.bat
+keilkill.bat
