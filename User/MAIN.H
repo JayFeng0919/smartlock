@@ -18,6 +18,7 @@
 
 /* ── 引脚总览 ────────────────────────────────────────
  *   PA0   → LED 指示灯（推挽输出）
+ *   PB5   → 蜂鸣器（推挽输出）
  *   PA8~11 → 矩阵键盘 行 R1~R4（推挽输出）
  *   PB12~15→ 矩阵键盘 列 C1~C4（上拉输入）
  *   PB1   → RC522 RST
@@ -105,6 +106,10 @@
 #define LED_PORT                         GPIOA
 #define LED_CLK                          RCC_APB2Periph_GPIOA
 
+#define BEEP_PIN                          GPIO_Pin_5
+#define BEEP_PORT                         GPIOB
+#define BEEP_CLK                          RCC_APB2Periph_GPIOB                      
+
 /* ── RC522 引脚快捷操作宏 ────────────────────────── */
 #define RST_H                            GPIO_SetBits(MF522_RST_PORT, MF522_RST_PIN)
 #define RST_L                            GPIO_ResetBits(MF522_RST_PORT, MF522_RST_PIN)
@@ -119,6 +124,10 @@
 /* ── LED 宏 ──────────────────────────────────────── */
 #define LED_ON                           GPIO_SetBits(LED_PORT, LED_PIN)
 #define LED_OFF                          GPIO_ResetBits(LED_PORT, LED_PIN)
+
+/* ── BEEP 宏 ─────────────────────────────────────── */
+#define BEEP_ON                           GPIO_SetBits(BEEP_PORT, BEEP_PIN)
+#define BEEP_OFF                          GPIO_ResetBits(BEEP_PORT, BEEP_PIN)
 
 #define TRUE 1
 #define FALSE 0
