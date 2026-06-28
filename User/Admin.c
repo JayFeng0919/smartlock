@@ -297,7 +297,7 @@ static void Admin_ViewCards(void)
 		OLED_ShowChar(1, 2, '/');
 		OLED_ShowNum(1, 3, CardCount, 1);
 		ShowCardSNR(2, WhiteList[idx]);
-		delay_10ms(150);
+		delay_10ms(100);
 		if (Key_Scan() == 12) return;   // * ·µ»Ø
 		if (idx < CardCount - 1)
 			idx++;

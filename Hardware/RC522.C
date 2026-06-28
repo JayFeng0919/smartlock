@@ -273,19 +273,19 @@ char PcdReset(void)
     RST_L;
     delay_10ms(1);
     RST_H;
-	  delay_10ms(10);
+	delay_10ms(10);
 	
-		if(ReadRawRC(0x02) == 0x80)
-		{
-			LED_ON;
-			delay_10ms(10);	
-			LED_OFF;
-			delay_10ms(10);	
-			LED_ON;
-			delay_10ms(10);	
-			LED_OFF;
-			delay_10ms(10);	
-		}
+	if(ReadRawRC(0x02) == 0x80)
+	{
+		LED_ON;
+		delay_10ms(10);	
+		LED_OFF;
+		delay_10ms(10);	
+		LED_ON;
+		delay_10ms(10);	
+		LED_OFF;
+		delay_10ms(10);	
+	}
 
     WriteRawRC(CommandReg,PCD_RESETPHASE);
     
@@ -583,7 +583,7 @@ void WaitCardOff(void)
 				}
 			}
 		}
-		delay_10ms(100);
+		delay_10ms(50);
 	}
 }
 
@@ -592,10 +592,8 @@ void WaitCardOff(void)
 ///////////////////////////////////////////////////////////////////////
 void delay_10ms(unsigned int _10ms)
 {
-	unsigned int i, j;
-
-	for(i=0; i<_10ms; i++)
+	while(_10ms--)
 	{
-		for(j=0; j<60000; j++);
+		Delay_us(10000);
 	}
 }

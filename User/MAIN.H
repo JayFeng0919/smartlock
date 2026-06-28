@@ -1,6 +1,14 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+#include "OLED.h"
+#include "Lock.h"       // GPIO + RC522 初始化
+#include "Key.h"        // 4x4 矩阵键盘
+#include "mfrc522.h"    // RC522 寻卡/防冲突/选卡
+#include "App.h"        // 常态模式（刷卡开锁 + 入口分流）
+#include "Admin.h"      // 管理员模式（密码→菜单→增删查改）
+#include "Delay.h"
+
 /* ═══════════════════════════════════════════════════════════
  *  MAIN.H — 硬件引脚映射 & 宏定义
  *

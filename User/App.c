@@ -141,7 +141,7 @@ void App_ProcessKey(void)
 	if (key == 14)                  // # ¼ü
 	{
 		HoldTime++;
-		if (HoldTime >= 150)
+		if (HoldTime >= 30)
 		{
 			HoldTime = 0;
 			while (Key_Get() == 14) delay_10ms(1);
