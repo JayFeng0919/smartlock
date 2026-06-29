@@ -172,7 +172,7 @@ static void Admin_AddCard(void)
 
 	while (1)
 	{
-		if (Key_Scan() == 11) return;   // * 取消
+		if (Key_Scan() == 12) return;   // * 取消
 
 		status = PcdRequest(REQ_ALL, TagType);
 		if (!status)
@@ -226,7 +226,7 @@ static void Admin_DelCard(void)
 
 	while (1)
 	{
-		if (Key_Scan() == 11) return;   // * 取消
+		if (Key_Scan() == 12) return;   // * 取消
 
 		status = PcdRequest(REQ_ALL, TagType);
 		if (!status)
@@ -253,7 +253,7 @@ static void Admin_DelCard(void)
 						while (1)
 						{
 							unsigned char key = Key_Scan();
-						if (key == 14)      // # 确认
+							if (key == 14)      // # 确认
 							{
 								RemoveCard(snr);
 								OLED_Clear();
@@ -263,7 +263,7 @@ static void Admin_DelCard(void)
 								WaitCardOff();
 								return;
 							}
-						if (key == 12)      // * 取消
+							if (key == 12)      // * 取消
 							{
 								WaitCardOff();
 								return;
@@ -279,7 +279,7 @@ static void Admin_DelCard(void)
 	}
 }
 
-/* ���� �ӹ���3���鿴��Ƭ�б� ������������������������������������������������ */
+/* ---- 子功能3：查看卡号白名单 ---- */
 static void Admin_ViewCards(void)
 {
 	unsigned char idx = 0;
@@ -369,20 +369,20 @@ static void Admin_ChangePassword(void)
 		key = Key_Scan();
 		if (key == 0xFF) continue;
 		if (key == 12) return;          // * 取消
-					if (key <= 10 || key == 13)
-			{
-				if (key == 13)      confirmBuf[pos] = 0;
-				else if (key == 0)  confirmBuf[pos] = 1;
-				else if (key == 1)  confirmBuf[pos] = 2;
-				else if (key == 2)  confirmBuf[pos] = 3;
-				else if (key == 4)  confirmBuf[pos] = 4;
-				else if (key == 5)  confirmBuf[pos] = 5;
-				else if (key == 6)  confirmBuf[pos] = 6;
-				else if (key == 8)  confirmBuf[pos] = 7;
-				else if (key == 9)  confirmBuf[pos] = 8;
-				else if (key == 10) confirmBuf[pos] = 9;
-				else                continue;
-				pos++;
+		if (key <= 10 || key == 13)
+		{
+			if (key == 13)      confirmBuf[pos] = 0;
+			else if (key == 0)  confirmBuf[pos] = 1;
+			else if (key == 1)  confirmBuf[pos] = 2;
+			else if (key == 2)  confirmBuf[pos] = 3;
+			else if (key == 4)  confirmBuf[pos] = 4;
+			else if (key == 5)  confirmBuf[pos] = 5;
+			else if (key == 6)  confirmBuf[pos] = 6;
+			else if (key == 8)  confirmBuf[pos] = 7;
+			else if (key == 9)  confirmBuf[pos] = 8;
+			else if (key == 10) confirmBuf[pos] = 9;
+			else                continue;
+			pos++;
 		}
 	}
 
