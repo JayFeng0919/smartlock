@@ -1,4 +1,4 @@
-﻿#include "stm32f10x.h"
+#include "stm32f10x.h"
 #include "OLED.h"
 #include "main.h"
 #include "mfrc522.h"
@@ -15,8 +15,6 @@
  *  密码：按任意数字键 → 该键作为第1位 → 继续输后3位
  * ═══════════════════════════════════════════════════ */
 
-#define MAX_CARD_COUNT      5
-#define PASSWORD_LENGTH     4
 #define MAX_PW_RETRY        3
 
 extern unsigned char WhiteList[MAX_CARD_COUNT][4];

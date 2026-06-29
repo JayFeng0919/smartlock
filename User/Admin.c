@@ -6,18 +6,18 @@
 #include "Admin.h"
 #include <string.h>
 
-/* �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
- *  Admin.c �� ����Աģʽʵ��
+/* ==================================================
+ *  Admin.c -- 管理员模式实现
  *
- *  ״̬������������ �� �˵�ѡ�� �� �ӹ��� �� ���ز˵�
- * �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T */
+ *  状态机：密码输入 -> 菜单选择 -> 子功能 -> 返回菜单
+ * ================================================== */
 
-/* ���� ȫ�ֱ��� ������������������������������������������������������������������������ */
-unsigned char WhiteList[MAX_CARD_COUNT][4]; // ������
-unsigned char CardCount = 0;                 // ��¼������
-unsigned char AdminPassword[PASSWORD_LENGTH] = {0,0,0,0}; // ����Ա����(��������)
+/* ---- 全局变量 ---- */
+unsigned char WhiteList[MAX_CARD_COUNT][4]; // 白名单
+unsigned char CardCount = 0;                  // 已录入数量
+unsigned char AdminPassword[PASSWORD_LENGTH] = {0,0,0,0}; // 管理员密码(数字数组)
 
-/* ���� �ڲ����� ������������������������������������������������������������������������ */
+/* ---- 内部辅助 ---- */
 
 static void LED_Blink(unsigned char times, unsigned int dly)
 {
@@ -29,7 +29,7 @@ static void LED_Blink(unsigned char times, unsigned int dly)
 	}
 }
 
-// �ȶԿ���
+// 比对卡号
 static unsigned char CheckCard(unsigned char *snr)
 {
 	unsigned char i;
@@ -41,7 +41,7 @@ static unsigned char CheckCard(unsigned char *snr)
 	return 0;
 }
 
-/* ���� ɾ��ָ������ ���� ����ƥ�����λѹ������ ���� */
+/* ---- 删除指定卡号：遍历匹配后移位压缩数组 ---- */
 static void RemoveCard(unsigned char *snr)
 {
 	unsigned char i, j;
@@ -57,13 +57,13 @@ static void RemoveCard(unsigned char *snr)
 	}
 }
 
-// ��ʾһ�о�������
+// 显示一行居中文字
 static void ShowLine(unsigned char line, const char *str)
 {
 	OLED_ShowString(line, 1, (char *)str);
 }
 
-/* ���� ��ʾ4�ֽ�HEX���� ���� line:�� col��1��ʼ ���� */
+/* ---- 显示4字节HEX卡号，line:行 col从1开始 ---- */
 static void ShowCardSNR(unsigned char line, unsigned char *snr)
 {
 	unsigned char i;
@@ -73,10 +73,10 @@ static void ShowCardSNR(unsigned char line, unsigned char *snr)
 	}
 }
 
-/* ���� �������� ������������������������������������������������������������������������
- * OLED��ʾ "Password:" + ����λ��(��*����)
- * ���أ�1=������ȷ, 0=ȡ��/����
- * ������������������������������������������������������������������������������������������������ */
+/* ---- 密码输入 ----
+ * OLED显示 "Password:" + 已输位数(用*屏蔽)
+ * 返回：1=密码正确, 0=取消/错误
+ * ---------------------------------------------- */
 static unsigned char InputPassword(unsigned char *correct)
 {
 	unsigned char buf[PASSWORD_LENGTH];
@@ -88,9 +88,9 @@ static unsigned char InputPassword(unsigned char *correct)
 
 	while (pos < PASSWORD_LENGTH)
 	{
-		OLED_ShowString(2, 1, "    ");     // ���ǰһ������
+		OLED_ShowString(2, 1, "    ");     // 清空前一次输入
 		OLED_ShowString(2, 1, "    ");
-		// ��ʾ������� *
+		// 显示已输入的 *
 		{
 			unsigned char j;
 			for (j = 0; j < pos; j++)
@@ -100,19 +100,19 @@ static unsigned char InputPassword(unsigned char *correct)
 		key = Key_Scan();
 		if (key == 0xFF) continue;
 
-		if (key == 12)  // * ����ȡ��
+		if (key == 12)  // * 键：取消
 			return 0;
 
-		if (key <= 10 || key == 13)    // ���ּ� 0~9
+		if (key <= 10 || key == 13)    // 数字键 0~9
 		{
 			if (key == 13) buf[pos]=0; else if (key==0) buf[pos]=1; else if (key==1) buf[pos]=2; else if (key==2) buf[pos]=3; else if (key==4) buf[pos]=4; else if (key==5) buf[pos]=5; else if (key==6) buf[pos]=6; else if (key==8) buf[pos]=7; else if (key==9) buf[pos]=8; else if (key==10) buf[pos]=9; else continue;
 			pos++;
-			// ���� *
+			// 回显 *
 			OLED_ShowChar(2, pos, '*');
 		}
 	}
 
-	// ȷ������
+	// 确认密码
 	delay_10ms(30);
 	if (memcmp(buf, correct, PASSWORD_LENGTH) == 0)
 	{
@@ -128,10 +128,10 @@ static unsigned char InputPassword(unsigned char *correct)
 	}
 }
 
-/* ���� �˵���ʾ ������������������������������������������������������������������������
- * ��1�У��˵�����
- * ��2�У���ǰѡ������¼���ҳ��
- * ������������������������������������������������������������������������������������������������ */
+/* ---- 菜单显示 ----
+ * 第1行：菜单标题
+ * 第2行：当前选项
+ * ---------------------------------------------- */
 static unsigned char ShowMenu(void)
 {
 	const char *menu[] = {
@@ -146,7 +146,7 @@ static unsigned char ShowMenu(void)
 	OLED_ShowString(1, 1, "1.Add  2.Del");
 	OLED_ShowString(2, 1, "3.View 4.PW");
 
-	// �ȴ�����
+	// 等待按键
 	while (1)
 	{
 		unsigned char key = Key_Scan();
@@ -156,11 +156,11 @@ static unsigned char ShowMenu(void)
 		if (key == 1) { OLED_Clear(); OLED_ShowString(1, 1, (char*)menu[1]); return 2; }   // 2
 		if (key == 2) { OLED_Clear(); OLED_ShowString(1, 1, (char*)menu[2]); return 3; }   // 3
 		if (key == 4) { OLED_Clear(); OLED_ShowString(1, 1, (char*)menu[3]); return 4; }   // 4
-		if (key == 12) { return 0; }    // '*': �˳�
+		if (key == 12) { return 0; }                                                        // * 退出
 	}
 }
 
-/* ���� �ӹ���1��¼��IC�� �������������������������������������������������������� */
+/* ---- 子功能1：录入卡片 ---- */
 static void Admin_AddCard(void)
 {
 	char status;
@@ -172,7 +172,7 @@ static void Admin_AddCard(void)
 
 	while (1)
 	{
-		if (Key_Scan() == 11) return;   // * ȡ��
+		if (Key_Scan() == 11) return;   // * 取消
 
 		status = PcdRequest(REQ_ALL, TagType);
 		if (!status)
@@ -214,7 +214,7 @@ static void Admin_AddCard(void)
 	}
 }
 
-/* ���� �ӹ���2��ɾ��IC�� �������������������������������������������������������� */
+/* ---- 子功能2：删除卡片 ---- */
 static void Admin_DelCard(void)
 {
 	char status;
@@ -226,7 +226,7 @@ static void Admin_DelCard(void)
 
 	while (1)
 	{
-		if (Key_Scan() == 11) return;   // * ȡ��
+		if (Key_Scan() == 11) return;   // * 取消
 
 		status = PcdRequest(REQ_ALL, TagType);
 		if (!status)
@@ -245,7 +245,7 @@ static void Admin_DelCard(void)
 					}
 					else
 					{
-						// ȷ��ɾ��
+					// 确认删除
 						OLED_Clear();
 						OLED_ShowString(1, 1, "Sure?");
 						OLED_ShowString(2, 1, "#=Yes *=No");
@@ -253,7 +253,7 @@ static void Admin_DelCard(void)
 						while (1)
 						{
 							unsigned char key = Key_Scan();
-							if (key == 14)      // # ȷ��
+						if (key == 14)      // # 确认
 							{
 								RemoveCard(snr);
 								OLED_Clear();
@@ -263,7 +263,7 @@ static void Admin_DelCard(void)
 								WaitCardOff();
 								return;
 							}
-							if (key == 12)      // * ȡ��
+						if (key == 12)      // * 取消
 							{
 								WaitCardOff();
 								return;
@@ -300,7 +300,7 @@ static void Admin_ViewCards(void)
 		OLED_ShowNum(1, 3, CardCount, 1);
 		ShowCardSNR(2, WhiteList[idx]);
 		delay_10ms(100);
-		if (Key_Scan() == 12) return;   // * ����
+		if (Key_Scan() == 12) return;   // * 返回
 		if (idx < CardCount - 1)
 			idx++;
 		else
@@ -308,7 +308,7 @@ static void Admin_ViewCards(void)
 	}
 }
 
-/* ���� �ӹ���4���޸����� �������������������������������������������������������� */
+/* ---- 子功能4：修改密码 ---- */
 static void Admin_ChangePassword(void)
 {
 	unsigned char oldBuf[PASSWORD_LENGTH];
@@ -316,11 +316,11 @@ static void Admin_ChangePassword(void)
 	unsigned char confirmBuf[PASSWORD_LENGTH];
 	unsigned char pos, key;
 
-	/* ��������� */
+	/* 输入旧密码 */
 	if (!InputPassword(AdminPassword))
 		return;
 
-	/* ���������� */
+	/* 输入新密码 */
 	OLED_Clear();
 	OLED_ShowString(1, 1, "New PW:");
 	pos = 0;
@@ -334,7 +334,7 @@ static void Admin_ChangePassword(void)
 		}
 		key = Key_Scan();
 		if (key == 0xFF) continue;
-		if (key == 12) return;          // * ȡ��
+		if (key == 12) return;          // * 取消
 					if (key <= 10 || key == 13)
 			{
 				if (key == 13)      newBuf[pos] = 0;
@@ -354,7 +354,7 @@ static void Admin_ChangePassword(void)
 
 	delay_10ms(30);
 
-	/* ȷ�������� */
+	/* 确认新密码 */
 	OLED_Clear();
 	OLED_ShowString(1, 1, "Confirm PW:");
 	pos = 0;
@@ -368,7 +368,7 @@ static void Admin_ChangePassword(void)
 		}
 		key = Key_Scan();
 		if (key == 0xFF) continue;
-		if (key == 12) return;          // * ȡ��
+		if (key == 12) return;          // * 取消
 					if (key <= 10 || key == 13)
 			{
 				if (key == 13)      confirmBuf[pos] = 0;
@@ -406,12 +406,12 @@ static void Admin_ChangePassword(void)
 	}
 }
 
-/* ���� �ⲿ�ӿ� ������������������������������������������������������������������������ */
+/* ---- 外部接口 ---- */
 
 void Admin_Init(void)
 {
 	unsigned char i;
-	// ����Ĭ������ "0000"
+	// 加载默认密码 "0000"
 	for (i = 0; i < PASSWORD_LENGTH; i++)
 		AdminPassword[i] = 0;
 }
@@ -422,7 +422,7 @@ void Admin_Enter(void)
 	unsigned char tryCount = 0;
 	unsigned char ok;
 
-	/* ���� ������֤�����3�Σ� ���� */
+	/* ---- 密码验证（最多3次） ---- */
 	while (tryCount < 3)
 	{
 		ok = InputPassword(AdminPassword);
@@ -435,18 +435,18 @@ void Admin_Enter(void)
 			OLED_ShowString(1, 1, "Locked!");
 			OLED_ShowString(2, 1, "Wait 10s...");
 			BEEP_Beep(1, 50);                       // 长鸣1声(500ms)警告
-			delay_10ms(1000);      // ����10��;      // ��10��
+			delay_10ms(1000);      // 锁定10秒
 			return;
 		}
 	}
 
-	/* ���� ���˵�ѭ�� ���� */
+	/* ---- 主菜单循环 ---- */
 	while (1)
 	{
 		choice = ShowMenu();
 		switch (choice)
 		{
-			case 0:  return;                // �˳�����Աģʽ
+			case 0:  return;                // 退出管理员模式
 			case 1:  Admin_AddCard();        break;
 			case 2:  Admin_DelCard();        break;
 			case 3:  Admin_ViewCards();      break;
