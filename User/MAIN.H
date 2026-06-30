@@ -50,10 +50,10 @@
 
 #define KEY_COL_PORT                     GPIOB
 #define KEY_COL_CLK                      RCC_APB2Periph_GPIOB
-#define KEY_COL1_PIN                     GPIO_Pin_15
-#define KEY_COL2_PIN                     GPIO_Pin_14
-#define KEY_COL3_PIN                     GPIO_Pin_13
-#define KEY_COL4_PIN                     GPIO_Pin_12
+#define KEY_COL1_PIN                     GPIO_Pin_12
+#define KEY_COL2_PIN                     GPIO_Pin_13
+#define KEY_COL3_PIN                     GPIO_Pin_14
+#define KEY_COL4_PIN                     GPIO_Pin_15
 #define KEY_COL_PINS                     (KEY_COL1_PIN | KEY_COL2_PIN | KEY_COL3_PIN | KEY_COL4_PIN)
 
 // ÐÐ²Ù×÷ºê
@@ -102,9 +102,9 @@
 #define MF522_NSS_PORT                   GPIOB
 #define MF522_NSS_CLK                    RCC_APB2Periph_GPIOB
 
-#define LED_PIN                          GPIO_Pin_0
-#define LED_PORT                         GPIOA
-#define LED_CLK                          RCC_APB2Periph_GPIOA
+#define LED_PIN                          GPIO_Pin_13
+#define LED_PORT                         GPIOC
+#define LED_CLK                          RCC_APB2Periph_GPIOC
 
 #define BEEP_PIN                          GPIO_Pin_5
 #define BEEP_PORT                         GPIOB
@@ -122,14 +122,11 @@
 #define READ_MISO                        GPIO_ReadInputDataBit(MF522_MISO_PORT, MF522_MISO_PIN)
 
 /* ©¤©¤ LED ºê ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
-#define LED_ON                           GPIO_SetBits(LED_PORT, LED_PIN)
-#define LED_OFF                          GPIO_ResetBits(LED_PORT, LED_PIN)
+#define LED_ON                           GPIO_ResetBits(LED_PORT, LED_PIN)
+#define LED_OFF                          GPIO_SetBits(LED_PORT, LED_PIN)
 
 /* ©¤©¤ BEEP ºê ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
 #define BEEP_ON                           GPIO_SetBits(BEEP_PORT, BEEP_PIN)
 #define BEEP_OFF                          GPIO_ResetBits(BEEP_PORT, BEEP_PIN)
-
-#define TRUE 1
-#define FALSE 0
 
 #endif
