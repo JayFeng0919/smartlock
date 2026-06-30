@@ -37,7 +37,7 @@
 
 /* ── 4x4 矩阵键盘 ───────────────────────────────────
  *  R1 R2 R3 R4  → PA8 PA9 PA10 PA11（行，推挽输出）
- *  C1 C2 C3 C4  → PB15 PB14 PB13 PB12（列，上拉输入）
+ *  C1 C2 C3 C4  → PB12 PB13 PB14 PB15（列，上拉输入）
  *  布局：
  *     C1   C2   C3   C4
  *  R1  1    2    3    A
@@ -143,8 +143,10 @@
  * ─────────────────────────────────────────────────── */
 #define FINGER_PWR_PIN                   GPIO_Pin_4
 #define FINGER_PWR_PORT                  GPIOA
+#define FINGER_PWR_CLK                   RCC_APB2Periph_GPIOA
 #define FINGER_TOUCH_PIN                 GPIO_Pin_0
 #define FINGER_TOUCH_PORT                GPIOA
+#define FINGER_TOUCH_CLK                 RCC_APB2Periph_GPIOA
 
 #define FINGER_PWR_ON                    GPIO_SetBits(FINGER_PWR_PORT, FINGER_PWR_PIN)
 #define FINGER_PWR_OFF                   GPIO_ResetBits(FINGER_PWR_PORT, FINGER_PWR_PIN)

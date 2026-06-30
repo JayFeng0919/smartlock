@@ -124,6 +124,7 @@ void App_Init(void)
 	OLED_ShowString(2, 1, "Ready");
 }
 
+/* 常态界面按键检测 */
 void App_ProcessKey(void)
 {
 	unsigned char key = Key_Get();
@@ -156,6 +157,7 @@ void App_ProcessKey(void)
 	}
 }
 
+/* 常态界面IC卡检测 */
 void App_ProcessCard(unsigned char *snr)
 {
 	if (CheckCard(snr))

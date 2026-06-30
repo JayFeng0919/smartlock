@@ -1,4 +1,4 @@
-﻿#include "stm32f10x.h"
+#include "stm32f10x.h"
 #include "main.h"
 
 /* ═══════════════════════════════════════════════════
@@ -14,7 +14,7 @@ int main(void)
 	unsigned char TagType[2];
 	unsigned char SelectedSnr[4];
 
-	/* ═══ 模块初始化（顺序与参考工程一致，确保指纹模组正确上电）═══ */
+	/* ═══ 模块初始化（顺序敏感） */
 	Timer_Init();                             // 0. TIM2 定时器
 	delay_10ms(8);                            // 上电后延时（参考工程建议）
 	Serial_Init();                            // 1. USART2（指纹模块通信）

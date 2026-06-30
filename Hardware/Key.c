@@ -1,13 +1,17 @@
-﻿#include "stm32f10x.h"
+#include "stm32f10x.h"
 #include "main.h"
 #include "Key.h"
 
-/* �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
- *  Key.c �� 4x4 �����������
- *
- *  ɨ�跽ʽ���������ͣ����е�ƽ������ȷ��
- *  ��ֵ���룺row*4 + col��0='1', 15='D'��
- * �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T */
+/* ── 4x4 矩阵键盘 ───────────────────────────────────
+ *  R1 R2 R3 R4  → PA8 PA9 PA10 PA11（行，推挽输出）
+ *  C1 C2 C3 C4  → PB12 PB13 PB14 PB15（列，上拉输入）
+ *  布局：
+ *     C1   C2   C3   C4
+ *  R1  1    2    3    A
+ *  R2  4    5    6    B
+ *  R3  7    8    9    C
+ *  R4  *    0    #    D
+ * ──────────────────────────────────────────────────── */
 
 static const char KeyMap[16] = {
 	'1', '2', '3', 'A',
@@ -35,10 +39,10 @@ void Key_Init(void)
 	KEY_ROW1_H; KEY_ROW2_H; KEY_ROW3_H; KEY_ROW4_H;
 }
 
-/* ���� ����ɨ���ȡ��ֵ�������������ڲ����ã� ���������������� */
+/* 矩阵键盘读取（辅助函数无消抖） */
 static unsigned char ScanRaw(void)
 {
-	// ��1
+	// ROW1
 	KEY_ROW1_L;
 	if      (KEY_COL1_READ == 0) { KEY_ROW1_H; return 0; }   // R1C1 = '1'
 	else if (KEY_COL2_READ == 0) { KEY_ROW1_H; return 1; }   // R1C2 = '2'
@@ -46,7 +50,7 @@ static unsigned char ScanRaw(void)
 	else if (KEY_COL4_READ == 0) { KEY_ROW1_H; return 3; }   // R1C4 = 'A'
 	KEY_ROW1_H;
 
-	// ��2
+	// ROW2
 	KEY_ROW2_L;
 	if      (KEY_COL1_READ == 0) { KEY_ROW2_H; return 4; }   // R2C1 = '4'
 	else if (KEY_COL2_READ == 0) { KEY_ROW2_H; return 5; }   // R2C2 = '5'
@@ -54,7 +58,7 @@ static unsigned char ScanRaw(void)
 	else if (KEY_COL4_READ == 0) { KEY_ROW2_H; return 7; }   // R2C4 = 'B'
 	KEY_ROW2_H;
 
-	// ��3
+	// ROW3
 	KEY_ROW3_L;
 	if      (KEY_COL1_READ == 0) { KEY_ROW3_H; return 8; }   // R3C1 = '7'
 	else if (KEY_COL2_READ == 0) { KEY_ROW3_H; return 9; }   // R3C2 = '8'
@@ -62,7 +66,7 @@ static unsigned char ScanRaw(void)
 	else if (KEY_COL4_READ == 0) { KEY_ROW3_H; return 11; }  // R3C4 = 'C'
 	KEY_ROW3_H;
 
-	// ��4
+	// ROW4
 	KEY_ROW4_L;
 	if      (KEY_COL1_READ == 0) { KEY_ROW4_H; return 12; }  // R4C1 = '*'
 	else if (KEY_COL2_READ == 0) { KEY_ROW4_H; return 13; }  // R4C2 = '0'
@@ -81,12 +85,12 @@ unsigned char Key_Scan(void)
 	if (key == 0xFF)
 		return 0xFF;
 
-	// �������� 20ms ��ɨһ��
+	// 20ms消抖
 	delay_10ms(2);
 	if (ScanRaw() != key)
 		return 0xFF;
 
-	// �ȴ������ͷ�
+	// 等待松手
 	while (ScanRaw() != 0xFF)
 	{
 		delay_10ms(1);
@@ -95,12 +99,11 @@ unsigned char Key_Scan(void)
 	return key;
 }
 
-
-/* ���� Key_Get: ����ɨ�裨�������޵ȴ��� �������������������������� */
 unsigned char Key_Get(void)
 {
 	return ScanRaw();
 }
+
 char Key_ToChar(unsigned char k)
 {
 	if (k >= 16)
