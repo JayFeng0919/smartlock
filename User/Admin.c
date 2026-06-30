@@ -1,4 +1,4 @@
-#include "stm32f10x.h"
+﻿#include "stm32f10x.h"
 #include "OLED.h"
 #include "main.h"
 #include "mfrc522.h"
@@ -18,16 +18,6 @@ unsigned char CardCount = 0;                  // 已录入数量
 unsigned char AdminPassword[PASSWORD_LENGTH] = {0,0,0,0}; // 管理员密码(数字数组)
 
 /* ---- 内部辅助 ---- */
-
-static void LED_Blink(unsigned char times, unsigned int dly)
-{
-	unsigned char i;
-	for (i = 0; i < times; i++)
-	{
-		LED_ON;  delay_10ms(dly);
-		LED_OFF; if (i < times - 1) delay_10ms(dly);
-	}
-}
 
 // 比对卡号
 static unsigned char CheckCard(unsigned char *snr)
@@ -144,7 +134,7 @@ static unsigned char ShowMenu(void)
 
 	OLED_Clear();
 	OLED_ShowString(1, 1, "1.Add  2.Del");
-	OLED_ShowString(2, 1, "3.View 4.PW");
+	OLED_ShowString(2, 1, "3.View 4.PW 5.FP");
 
 	// 等待按键
 	while (1)
@@ -156,6 +146,7 @@ static unsigned char ShowMenu(void)
 		if (key == 1) { OLED_Clear(); OLED_ShowString(1, 1, (char*)menu[1]); return 2; }   // 2
 		if (key == 2) { OLED_Clear(); OLED_ShowString(1, 1, (char*)menu[2]); return 3; }   // 3
 		if (key == 4) { OLED_Clear(); OLED_ShowString(1, 1, (char*)menu[3]); return 4; }   // 4
+		if (key == 5) { OLED_Clear(); OLED_ShowString(1, 1, "5.Finger Print");  return 5; }   // 5
 		if (key == 12) { return 0; }                                                        // * 退出
 	}
 }
@@ -406,6 +397,59 @@ static void Admin_ChangePassword(void)
 	}
 }
 
+/* ---- 子功能5：指纹管理 ---- */
+static void Admin_FingerMenu(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "1.Add 2.ClearAll");
+	OLED_ShowString(2, 1, "3.Count  *.Back");
+
+	while (1)
+	{
+		unsigned char key = Key_Scan();
+		if (key == 0xFF) continue;
+
+		if (key == 0)      /* 1 → 添加指纹 */
+		{
+			OLED_Clear();
+			Finger_Add();
+			OLED_Clear();
+			OLED_ShowString(1, 1, "1.Add 2.ClearAll");
+			OLED_ShowString(2, 1, "3.Count  *.Back");
+		}
+		else if (key == 1) /* 2 → 清空指纹库 */
+		{
+			OLED_Clear();
+			OLED_ShowString(1, 1, "Clear All?");
+			OLED_ShowString(2, 1, "1=Yes  *=No");
+			while (1)
+			{
+				unsigned char k = Key_Scan();
+				if (k == 0xFF) continue;
+				if (k == 0)      { Finger_ClearAll(); break; }  /* 1=确认 */
+				if (k == 12)     break;                          /* *=取消 */
+			}
+			OLED_Clear();
+			OLED_ShowString(1, 1, "1.Add 2.ClearAll");
+			OLED_ShowString(2, 1, "3.Count  *.Back");
+		}
+		else if (key == 2) /* 3 → 查看数量 */
+		{
+			unsigned char cnt = Finger_GetCount();
+			OLED_Clear();
+			OLED_ShowString(1, 1, "Finger Count:");
+			OLED_ShowNum(2, 1, cnt, 3);
+			delay_10ms(200);
+			OLED_Clear();
+			OLED_ShowString(1, 1, "1.Add 2.ClearAll");
+			OLED_ShowString(2, 1, "3.Count  *.Back");
+		}
+		else if (key == 12) /* * → 返回 */
+		{
+			return;
+		}
+	}
+}
 /* ---- 外部接口 ---- */
 
 void Admin_Init(void)
@@ -451,6 +495,7 @@ void Admin_Enter(void)
 			case 2:  Admin_DelCard();        break;
 			case 3:  Admin_ViewCards();      break;
 			case 4:  Admin_ChangePassword(); break;
+			case 5:  Admin_FingerMenu();     break;
 			default: break;
 		}
 	}

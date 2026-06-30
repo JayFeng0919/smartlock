@@ -34,16 +34,6 @@ static unsigned char CheckCard(unsigned char *snr)
 	return 0;
 }
 
-static void LED_Blink(unsigned char times, unsigned int dly)
-{
-	unsigned char i;
-	for (i = 0; i < times; i++)
-	{
-		LED_ON;  delay_10ms(dly);
-		LED_OFF; if (i < times - 1) delay_10ms(dly);
-	}
-}
-
 static unsigned char IsDigitKey(unsigned char key)
 {
 	return (key <= 2 || key == 4 || key == 5 || key == 6 ||

@@ -5,9 +5,12 @@
 #include "Lock.h"       // GPIO + RC522 初始化
 #include "Key.h"        // 4x4 矩阵键盘
 #include "mfrc522.h"    // RC522 寻卡/防冲突/选卡
-#include "App.h"        // 常态模式（刷卡开锁 + 入口分流）
-#include "Admin.h"      // 管理员模式（密码→菜单→增删查改）
 #include "Delay.h"
+#include "Timer.h"
+#include "Finger.h"     // 指纹模块驱动
+#include "Serial.h"     // USART2 串口（指纹模块通信）
+#include "App.h"        // 常态模式（刷卡开锁 + 入口分流）
+#include "Admin.h"      // 管理员模式（密码->菜单->增删查改）
 
 /* ═══════════════════════════════════════════════════════════
  *  MAIN.H — 硬件引脚映射 & 宏定义
@@ -17,7 +20,9 @@
  * ═══════════════════════════════════════════════════════════ */
 
 /* ── 引脚总览 ────────────────────────────────────────
- *   PA0   → LED 指示灯（推挽输出）
+ *   PA0   → 指纹模块 TouchOut（手指检测）
+ *   PA2/3 → 指纹模块 USART2（TX/RX）
+ *   PA4   → 指纹模块 电源控制
  *   PB5   → 蜂鸣器（推挽输出）
  *   PA8~11 → 矩阵键盘 行 R1~R4（推挽输出）
  *   PB12~15→ 矩阵键盘 列 C1~C4（上拉输入）
@@ -27,6 +32,7 @@
  *   PB10  → RC522 SCK
  *   PB11  → RC522 NSS
  *   PB8/9 → OLED I2C
+ *   PC13  → LED 指示灯（推挽输出）
  * ──────────────────────────────────────────────────── */
 
 /* ── 4x4 矩阵键盘 ───────────────────────────────────
@@ -108,7 +114,7 @@
 
 #define BEEP_PIN                          GPIO_Pin_5
 #define BEEP_PORT                         GPIOB
-#define BEEP_CLK                          RCC_APB2Periph_GPIOB                      
+#define BEEP_CLK                          RCC_APB2Periph_GPIOB
 
 /* ── RC522 引脚快捷操作宏 ────────────────────────── */
 #define RST_H                            GPIO_SetBits(MF522_RST_PORT, MF522_RST_PIN)
@@ -128,5 +134,23 @@
 /* ── BEEP 宏 ─────────────────────────────────────── */
 #define BEEP_ON                           GPIO_SetBits(BEEP_PORT, BEEP_PIN)
 #define BEEP_OFF                          GPIO_ResetBits(BEEP_PORT, BEEP_PIN)
+
+/* ── 指纹模块引脚 ──────────────────────────────────
+ *   PA4   → 模块电源控制（高电平供电）
+ *   PA0   → 手指检测 TouchOut（高电平=有手指）
+ *   PA2   → USART2_TX（接模块 RX）
+ *   PA3   → USART2_RX（接模块 TX）
+ * ─────────────────────────────────────────────────── */
+#define FINGER_PWR_PIN                   GPIO_Pin_4
+#define FINGER_PWR_PORT                  GPIOA
+#define FINGER_TOUCH_PIN                 GPIO_Pin_0
+#define FINGER_TOUCH_PORT                GPIOA
+
+#define FINGER_PWR_ON                    GPIO_SetBits(FINGER_PWR_PORT, FINGER_PWR_PIN)
+#define FINGER_PWR_OFF                   GPIO_ResetBits(FINGER_PWR_PORT, FINGER_PWR_PIN)
+#define FINGER_TOUCH_READ                GPIO_ReadInputDataBit(FINGER_TOUCH_PORT, FINGER_TOUCH_PIN)
+
+#define TRUE 1
+#define FALSE 0
 
 #endif
