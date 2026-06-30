@@ -150,7 +150,4 @@
 #define FINGER_PWR_OFF                   GPIO_ResetBits(FINGER_PWR_PORT, FINGER_PWR_PIN)
 #define FINGER_TOUCH_READ                GPIO_ReadInputDataBit(FINGER_TOUCH_PORT, FINGER_TOUCH_PIN)
 
-#define TRUE 1
-#define FALSE 0
-
 #endif
