@@ -495,23 +495,40 @@ static void Admin_QRStatus(void)
 
 static void Admin_QRMenu(void)
 {
+	OLED_Clear();
+	OLED_ShowString(1, 1, "1.Enroll 2.Clear");
+	OLED_ShowString(2, 1, "3.Status *.Back");
+
 	while (1)
 	{
-		unsigned char Key;
+		unsigned char Key = Key_Scan();
+		if (Key == 0xFF) continue;
 
-		OLED_Clear();
-		OLED_ShowString(1, 1, "1.Enroll 2.Clear");
-		OLED_ShowString(2, 1, "3.Status *.Back");
-
-		Key = Key_Scan();
 		if (Key == 0)
+		{
 			Admin_QREnroll();
+			OLED_Clear();
+			OLED_ShowString(1, 1, "1.Enroll 2.Clear");
+			OLED_ShowString(2, 1, "3.Status *.Back");
+		}
 		else if (Key == 1)
+		{
 			Admin_QRClear();
+			OLED_Clear();
+			OLED_ShowString(1, 1, "1.Enroll 2.Clear");
+			OLED_ShowString(2, 1, "3.Status *.Back");
+		}
 		else if (Key == 2)
+		{
 			Admin_QRStatus();
+			OLED_Clear();
+			OLED_ShowString(1, 1, "1.Enroll 2.Clear");
+			OLED_ShowString(2, 1, "3.Status *.Back");
+		}
 		else if (Key == 12)
+		{
 			return;
+		}
 	}
 }
 
@@ -528,7 +545,7 @@ static void Admin_ChangePassword(void)
 	/* 旧密码验证 */
 	if (!InputPassword(AdminPassword))
 		return;
-
+	
 	/* 输入新密码 */
 	OLED_Clear();
 	OLED_ShowString(1, 1, "New PW:");
