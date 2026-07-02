@@ -4,6 +4,7 @@
 #include "mfrc522.h"
 #include "Key.h"
 #include "Admin.h"
+#include "QR.h"
 #include <string.h>
 
 /* ═══════════════════════════════════════════════════
@@ -124,14 +125,14 @@ static unsigned char InputPassword(unsigned char *correct)
 
 /*
  * ShowMainMenu — 一级菜单
- *   1.Card  2.Finger  3.PW  *.Exit
- *   返回：1=卡, 2=指纹, 3=密码, 0=退出
+ *   1.Card  2.Finger  3.PW  4.QR  *.Exit
+ *   返回：1=卡, 2=指纹, 3=密码, 4=二维码, 0=退出
  */
 static unsigned char ShowMainMenu(void)
 {
 	OLED_Clear();
 	OLED_ShowString(1, 1, "1.Card  2.Finger");
-	OLED_ShowString(2, 1, "3.PW      *.Exit");
+	OLED_ShowString(2, 1, "3.PW 4.QR *.Exit");
 
 	while (1)
 	{
@@ -140,6 +141,7 @@ static unsigned char ShowMainMenu(void)
 		if (key == 0)                 return 1;   /* 1 → Card */
 		if (key == 1)                 return 2;   /* 2 → Finger */
 		if (key == 2)                 return 3;   /* 3 → PW */
+		if (key == 4)                 return 4;   /* 4 → QR */
 		if (key == 12)                return 0;   /* * → Exit */
 	}
 }
@@ -367,6 +369,153 @@ static void Admin_FingerMenu(void)
 }
 
 /* ═══════════════════════════════════════════════════
+ *  二维码管理
+ * ═══════════════════════════════════════════════════ */
+
+static void Admin_ShowQRPreview(
+	const unsigned char *Data,
+	unsigned char Length)
+{
+	unsigned char i;
+	unsigned char DisplayLength = (Length > 16U) ? 16U : Length;
+
+	for (i = 0U; i < DisplayLength; i++)
+	{
+		unsigned char Ch = Data[i];
+		if ((Ch < 32U) || (Ch > 126U))
+			Ch = '.';
+		OLED_ShowChar(3, 1U + i, Ch);
+	}
+}
+
+static void Admin_QREnroll(void)
+{
+	unsigned char Data[QR_MAX_PAYLOAD_LENGTH];
+	unsigned char Length;
+	unsigned char Event;
+
+	QR_FlushEvents();
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Scan New QR");
+	OLED_ShowString(2, 1, "*.Cancel");
+
+	while (1)
+	{
+		unsigned char Key = Key_Scan();
+		if (Key == 12)
+			return;
+
+		Event = QR_GetEvent(Data, &Length);
+		if (Event != QR_EVENT_DATA)
+			continue;
+
+		OLED_Clear();
+		OLED_ShowString(1, 1, "QR Received");
+		OLED_ShowString(2, 1, "Len:");
+		OLED_ShowNum(2, 5, Length, 2);
+		Admin_ShowQRPreview(Data, Length);
+		OLED_ShowString(4, 1, "#=Save  *=No");
+
+		while (1)
+		{
+			Key = Key_Scan();
+			if (Key == 0xFF)
+				continue;
+			if (Key == 12)
+				return;
+			if (Key == 14)
+			{
+				OLED_Clear();
+				if (QR_SaveAuthorized(Data, Length))
+				{
+					OLED_ShowString(1, 1, "QR Saved!");
+					BEEP_Beep(1, 20);
+				}
+				else
+				{
+					OLED_ShowString(1, 1, "Save Failed!");
+					BEEP_Beep(3, 10);
+				}
+				delay_10ms(150);
+				return;
+			}
+		}
+	}
+}
+
+static void Admin_QRClear(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Clear QR?");
+	OLED_ShowString(2, 1, "#=Yes  *=No");
+
+	while (1)
+	{
+		unsigned char Key = Key_Scan();
+		if (Key == 0xFF)
+			continue;
+		if (Key == 12)
+			return;
+		if (Key == 14)
+		{
+			OLED_Clear();
+			if (QR_ClearAuthorized())
+			{
+				OLED_ShowString(1, 1, "QR Cleared!");
+				BEEP_Beep(1, 20);
+			}
+			else
+			{
+				OLED_ShowString(1, 1, "Clear Failed!");
+				BEEP_Beep(3, 10);
+			}
+			delay_10ms(150);
+			return;
+		}
+	}
+}
+
+static void Admin_QRStatus(void)
+{
+	OLED_Clear();
+	OLED_ShowString(1, 1, "QR Status:");
+	if (QR_HasAuthorized())
+	{
+		OLED_ShowString(2, 1, "Configured");
+		OLED_ShowString(3, 1, "Length:");
+		OLED_ShowNum(3, 8, QR_GetAuthorizedLength(), 2);
+	}
+	else
+	{
+		OLED_ShowString(2, 1, "Not Set");
+	}
+	OLED_ShowString(4, 1, "*.Back");
+	while (Key_Scan() != 12);
+}
+
+static void Admin_QRMenu(void)
+{
+	while (1)
+	{
+		unsigned char Key;
+
+		OLED_Clear();
+		OLED_ShowString(1, 1, "1.Enroll 2.Clear");
+		OLED_ShowString(2, 1, "3.Status *.Back");
+
+		Key = Key_Scan();
+		if (Key == 0)
+			Admin_QREnroll();
+		else if (Key == 1)
+			Admin_QRClear();
+		else if (Key == 2)
+			Admin_QRStatus();
+		else if (Key == 12)
+			return;
+	}
+}
+
+/* ═══════════════════════════════════════════════════
  *  密码修改
  * ═══════════════════════════════════════════════════ */
 
@@ -474,6 +623,7 @@ void Admin_Enter(void)
 			case 1:  Admin_CardMenu();      break;       /* 卡片管理 */
 			case 2:  Admin_FingerMenu();    break;       /* 指纹管理 */
 			case 3:  Admin_ChangePassword(); break;      /* 修改密码 */
+			case 4:  Admin_QRMenu();        break;       /* 二维码管理 */
 			default: break;
 		}
 	}

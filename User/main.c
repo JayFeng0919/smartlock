@@ -23,14 +23,18 @@ int main(void)
 	Key_Init();                               // 4. 矩阵键盘
 	Lock_GPIO_Init();                         // 5. RC522 + LED + BEEP 引脚
 	Lock_RC522_Init();                        // 6. RC522 复位 + 配置
-	Admin_Init();                             // 7. 加载管理员密码
-	App_Init();                               // 8. 显示常态界面
+	QR_Init();                                // 7. I2C1二维码接收 + 加载授权码
+	Admin_Init();                             // 8. 加载管理员密码
+	App_Init();                               // 9. 显示常态界面
 
 	/* ═══ 主循环：10ms 周期 ═══ */
 	while (1)
 	{
 		/* 按键处理：长按 # 1.5秒 → 管理员模式 */
 		App_ProcessKey();
+
+		/* OpenMV二维码处理：中断接收，主循环完成比对和开锁 */
+		App_ProcessQR();
 
 		/* 刷卡处理：ISO14443 标准三部曲 */
 		status = PcdRequest(REQ_ALL, TagType);

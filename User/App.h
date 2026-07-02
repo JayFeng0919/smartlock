@@ -6,5 +6,6 @@
 void App_Init(void);
 void App_ProcessKey(void);
 void App_ProcessCard(unsigned char *snr);
+void App_ProcessQR(void);
 
 #endif

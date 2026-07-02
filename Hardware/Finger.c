@@ -122,7 +122,7 @@ void Finger_Unlock(void)
 		{
 			OLED_Clear();
 			OLED_ShowString(1, 1, "Unlock OK");
-			LED_ON; BEEP_Beep(1, 20); delay_10ms(100); LED_OFF;
+			Lock_AccessGrant(100);
 			OLED_Clear();
 			break;
 		}
@@ -130,7 +130,7 @@ void Finger_Unlock(void)
 		{
 			OLED_Clear();
 			OLED_ShowString(1, 1, "Unlock Failed");
-			LED_Blink(3, 5); BEEP_Beep(3, 10);
+			Lock_AccessDeny();
 			delay_10ms(100); OLED_Clear();
 			break;
 		}

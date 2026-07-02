@@ -78,6 +78,28 @@ void Lock_RC522_Init(void)
 	M500PcdConfigISOType('A');
 }
 
+void Lock_AccessGrant(unsigned int HoldTime)
+{
+	LED_ON;
+	BEEP_Beep(1, 20);
+	if (HoldTime > 0U)
+	{
+		delay_10ms(HoldTime);
+		LED_OFF;
+	}
+}
+
+void Lock_AccessClose(void)
+{
+	LED_OFF;
+}
+
+void Lock_AccessDeny(void)
+{
+	LED_Blink(3, 5);
+	BEEP_Beep(3, 10);
+}
+
 
 /* ── LED_Blink ─────────────────────────────────────────────────────────
  * LED 闪烁辅助函数

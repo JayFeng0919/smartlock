@@ -5,6 +5,7 @@
 #include "Key.h"
 #include "Admin.h"
 #include "App.h"
+#include "QR.h"
 #include <string.h>
 
 /* ═══════════════════════════════════════════════════
@@ -22,6 +23,10 @@ extern unsigned char CardCount;
 extern unsigned char AdminPassword[PASSWORD_LENGTH];
 
 static unsigned int HoldTime = 0;
+static unsigned char QRLatched = 0;
+static unsigned char QRIgnoreUntilClear = 0;
+static unsigned char LastQRData[QR_MAX_PAYLOAD_LENGTH];
+static unsigned char LastQRLength = 0;
 
 static unsigned char CheckCard(unsigned char *snr)
 {
@@ -102,18 +107,14 @@ static void App_PasswordUnlock(unsigned char firstKey)
 		OLED_Clear();
 		OLED_ShowString(1, 1, "Smart Lock");
 		OLED_ShowString(2, 1, "True");
-		LED_ON;
-		BEEP_Beep(1, 20);           // 蜂鸣1声(200ms)表示开锁成功
-		delay_10ms(200);
-		LED_OFF;
+		Lock_AccessGrant(200);
 	}
 	else
 	{
 		OLED_Clear();
 		OLED_ShowString(1, 1, "Smart Lock");
 		OLED_ShowString(2, 1, "False");
-		LED_Blink(3, 5);
-		BEEP_Beep(3, 10);           // 蜂鸣3声(各100ms)表示失败
+		Lock_AccessDeny();
 	}
 	OLED_Clear();
 }
@@ -137,6 +138,13 @@ void App_ProcessKey(void)
 			HoldTime = 0;
 			while (Key_Get() == 14) delay_10ms(1);
 			Admin_Enter();
+			/*
+			 * 管理员录入二维码后，必须等当前二维码离开画面，
+			 * 避免退出菜单时立刻用刚录入的二维码开锁。
+			 */
+			QR_FlushEvents();
+			QRIgnoreUntilClear = 1;
+			QRLatched = 1;
 			OLED_Clear();
 			OLED_ShowString(1, 1, "Smart Lock");
 			OLED_ShowString(2, 1, "Ready");
@@ -157,6 +165,62 @@ void App_ProcessKey(void)
 	}
 }
 
+/* OpenMV二维码事件处理 */
+void App_ProcessQR(void)
+{
+	unsigned char Data[QR_MAX_PAYLOAD_LENGTH];
+	unsigned char Length = 0;
+	unsigned char Event = QR_GetEvent(Data, &Length);
+
+	if (Event == QR_EVENT_NONE)
+		return;
+
+	if (Event == QR_EVENT_CLEAR)
+	{
+		QRLatched = 0;
+		QRIgnoreUntilClear = 0;
+		LastQRLength = 0;
+		return;
+	}
+
+	if (Event != QR_EVENT_DATA)
+		return;
+	if (QRIgnoreUntilClear)
+		return;
+
+	/* 相同二维码停留在画面中时只处理一次。 */
+	if (QRLatched &&
+	    (Length == LastQRLength) &&
+	    (memcmp(Data, LastQRData, Length) == 0))
+	{
+		return;
+	}
+
+	memcpy(LastQRData, Data, Length);
+	LastQRLength = Length;
+	QRLatched = 1;
+
+	OLED_Clear();
+	OLED_ShowString(1, 1, "Smart Lock");
+
+	if (QR_IsAuthorized(Data, Length))
+	{
+		OLED_ShowString(2, 1, "QR True");
+		Lock_AccessGrant(100);
+	}
+	else
+	{
+		if (QR_HasAuthorized())
+			OLED_ShowString(2, 1, "QR False");
+		else
+			OLED_ShowString(2, 1, "QR Not Set");
+		Lock_AccessDeny();
+	}
+
+	OLED_Clear();
+	App_Init();
+}
+
 /* 常态界面IC卡检测 */
 void App_ProcessCard(unsigned char *snr)
 {
@@ -165,9 +229,9 @@ void App_ProcessCard(unsigned char *snr)
 		OLED_Clear();
 		OLED_ShowString(1, 1, "Smart Lock");
 		OLED_ShowString(2, 1, "True");
-		LED_ON;
-		BEEP_Beep(1, 20);           // 蜂鸣1声(200ms)表示开锁成功
+		Lock_AccessGrant(0);
 		WaitCardOff();
+		Lock_AccessClose();
 		OLED_Clear();
 		OLED_ShowString(1, 1, "Smart Lock");
 		OLED_ShowString(2, 1, "Ready");
@@ -177,8 +241,7 @@ void App_ProcessCard(unsigned char *snr)
 		OLED_Clear();
 		OLED_ShowString(1, 1, "Smart Lock");
 		OLED_ShowString(2, 1, "False");
-		LED_Blink(3, 5);
-		BEEP_Beep(3, 10);           // 蜂鸣3声(各100ms)表示失败
+		Lock_AccessDeny();
 		WaitCardOff();
 		OLED_Clear();
 		OLED_ShowString(1, 1, "Smart Lock");
